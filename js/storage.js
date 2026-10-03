@@ -48,5 +48,16 @@ function loadProject() {
         project.arbitration || "";
 }
 
-window.onload =
-    loadProject;
+window.onload = () => {
+
+    loadProject();
+
+    if(
+        typeof loadVersions
+        === "function"
+    ){
+        loadVersions();
+    }
+
+};
+
