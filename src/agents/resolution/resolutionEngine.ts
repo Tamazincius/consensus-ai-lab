@@ -8,7 +8,6 @@ export function detectConflict(
  const max =
  Math.max(...scores);
 
- return (
-   max - min
- ) >= 0.5;
+ return (max-min) >= 0.5;
+
 }
