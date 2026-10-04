@@ -21,8 +21,12 @@ const FILES_TO_CACHE = [
     "./js/conflict-tree.js",
     "./js/projects.js",
     "./js/json-import.js",
-    "./js/workflow.js",
     "./js/docx-export.js",
+    "./js/state.js",
+    "./js/workflow/pipeline-state.js",
+    "./js/workflow/loop-controller.js",
+    "./js/workflow/orchestrator.js",
+    "./js/workflow/workflow.js",
 
     "./assets/icon-192.png",
     "./assets/icon-512.png",
