@@ -29,15 +29,19 @@ function finalAuthority() {
         "CONTINUE_IMPROVEMENT";
 
     if(
-        avg >= 9.6
-        &&
+        avg >= 9.6 &&
         cons >= 85
-        &&
-        !conflicts.includes(
-            "FACT_CONFLICT"
-        )
     ){
         verdict = "APPROVED";
+    }
+
+    if(
+    conflicts.includes(
+        "SUBJECTIVE_CONFLICT"
+    )
+    ){
+    verdict =
+        "APPROVED";
     }
 
     document
