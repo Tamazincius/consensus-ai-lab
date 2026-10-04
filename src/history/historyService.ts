@@ -1,1 +1,5 @@
+saveIteration()
 
+getHistory()
+
+getTrend()
