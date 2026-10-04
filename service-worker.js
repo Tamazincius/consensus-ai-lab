@@ -1,4 +1,4 @@
-const CACHE_NAME = "consensus-ai-lab-v1";
+const CACHE_NAME = "consensus-ai-lab-v2";
 
 const FILES_TO_CACHE = [
     "./",
