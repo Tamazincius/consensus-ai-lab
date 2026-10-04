@@ -30,15 +30,15 @@ Vertink:
 Grąžink JSON:
 
 {
- "score":0,
- "strengths":[],
- "issues":[],
- "recommendations":[]
+  "score": 0,
+  "strengths": [],
+  "issues": [],
+  "recommendations": []
 }`;
 
-    document.getElementById(
-        "promptOutput"
-    ).value = prompt;
+    document
+        .getElementById("promptOutput")
+        .value = prompt;
 
 }
 
@@ -46,9 +46,25 @@ if ("serviceWorker" in navigator) {
 
     window.addEventListener("load", () => {
 
-        navigator.serviceWorker.register(
-            "./service-worker.js"
-        );
+        navigator.serviceWorker
+            .register("./service-worker.js")
+
+            .then(() => {
+
+                console.log(
+                    "Service Worker registered"
+                );
+
+            })
+
+            .catch(error => {
+
+                console.error(
+                    "Service Worker error:",
+                    error
+                );
+
+            });
 
     });
 
