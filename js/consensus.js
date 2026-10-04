@@ -50,4 +50,14 @@ function calculateConsensus() {
     ).innerText =
         consensus.toFixed(1) + "%";
 
+    document.getElementById(
+    "dashboardQuality"
+    ).innerText =
+         average.toFixed(2);
+
+    document.getElementById(
+    "dashboardConsensus"
+    ).innerText =
+         consensus.toFixed(1)+"%";
+
 }
