@@ -1,19 +1,26 @@
 export enum PipelineStage {
+
   CREATION = "creation",
+
   VALIDATION = "validation",
+
   RESOLUTION = "resolution",
+
   IMPROVEMENT = "improvement",
+
   APPROVAL = "approval"
 }
 
 export interface PipelineState {
-  projectId: string;
 
-  stage: PipelineStage;
+  projectId:string;
 
-  iteration: number;
+  stage:PipelineStage;
 
-  score: number;
+  iteration:number;
 
-  completed: boolean;
+  score:number;
+
+  completed:boolean;
+
 }
