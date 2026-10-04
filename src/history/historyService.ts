@@ -1,5 +1,39 @@
-saveIteration()
+const KEY =
+"consensus-history";
 
-getHistory()
+export function saveIteration(
+ score:number
+){
 
-getTrend()
+ const current =
+ JSON.parse(
+  localStorage.getItem(KEY)
+  || "[]"
+ );
+
+ current.push({
+
+  timestamp:
+   Date.now(),
+
+  score
+
+ });
+
+ localStorage.setItem(
+  KEY,
+  JSON.stringify(current)
+ );
+
+}
+
+export function getHistory(){
+
+ return JSON.parse(
+
+  localStorage.getItem(KEY)
+  || "[]"
+
+ );
+
+}
