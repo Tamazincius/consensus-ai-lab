@@ -44,14 +44,7 @@ Grąžink JSON:
 
 if ("serviceWorker" in navigator) {
 
-    window.addEventListener("load", async () => {
-
-        const registrations =
-            await navigator.serviceWorker.getRegistrations();
-
-        for (const registration of registrations) {
-            await registration.unregister();
-        }
+    window.addEventListener("load", () => {
 
         navigator.serviceWorker.register(
             "./service-worker.js"
