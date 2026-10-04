@@ -45,6 +45,15 @@ function calculateConsensus() {
     ).innerText =
         average.toFixed(2);
 
+    if(
+        typeof updateChart
+        === "function"
+){
+        updateChart(
+            average
+    );
+}
+
     document.getElementById(
         "consensusScore"
     ).innerText =
