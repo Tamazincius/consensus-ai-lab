@@ -1,3 +1,5 @@
+import { Review } from "./Review";
+
 export interface ValidationReport {
 
   averageScore:number;
@@ -10,6 +12,6 @@ export interface ValidationReport {
 
   factErrors:number;
 
-  reviews:any[];
+  reviews:Review[];
 
 }
