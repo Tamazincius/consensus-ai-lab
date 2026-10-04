@@ -2,7 +2,7 @@
   "name": "Consensus AI Lab",
   "short_name": "ConsensusAI",
   "display": "standalone",
-  "start_url": "./",
+  "start_url": ".",
   "theme_color": "#123b66",
   "background_color": "#ffffff",
   "icons": [
