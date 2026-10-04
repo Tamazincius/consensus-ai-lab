@@ -60,4 +60,27 @@ function calculateConsensus() {
     ).innerText =
          consensus.toFixed(1)+"%";
 
+    const status =
+document.getElementById(
+    "dashboardStatus"
+);
+
+if(
+    average >= 9.6
+){
+    status.innerText =
+        "READY";
+
+    status.style.color =
+        "green";
+}
+else{
+
+    status.innerText =
+        "IMPROVE";
+
+    status.style.color =
+        "red";
+}
+
 }
