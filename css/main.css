@@ -42,3 +42,21 @@ button{
     border:none;
     border-radius:8px;
 }
+
+#storageStatus {
+    min-height: 24px;
+    margin-top: 12px;
+    font-weight: 600;
+}
+
+#storageStatus[data-status="success"] {
+    color: #15803d;
+}
+
+#storageStatus[data-status="error"] {
+    color: #b91c1c;
+}
+
+#storageStatus[data-status="info"] {
+    color: #1d4ed8;
+}
