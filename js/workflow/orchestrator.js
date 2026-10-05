@@ -187,12 +187,14 @@ async function runSinglePipelineIteration() {
         PipelineStage.APPROVING
     );
 
+    const authorityResult =
     await executeAvailableFunction(
         "finalAuthority"
     );
 
     const consensusResult =
-        readCurrentConsensusResult();
+    authorityResult ||
+    readCurrentConsensusResult();
 
     appState.projectData.consensus =
         consensusResult;
