@@ -15,6 +15,7 @@ const REQUIRED_FILES = [
     "./css/main.css",
 
     "./js/state.js",
+    "./js/storage/database.js",
 
     "./js/workflow/pipeline-state.js",
     "./js/workflow/loop-controller.js",
