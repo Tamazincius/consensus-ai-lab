@@ -288,25 +288,25 @@ function loadProject() {
             reviewerImport.importedScore || "0"
         );
 
-        setStorageValue(
-            "claudeScore",
-            scores.claude || ""
-        );
+setStorageValue(
+    "claudeScore",
+    scores.claude ?? ""
+);
 
-        setStorageValue(
-            "geminiScore",
-            scores.gemini || ""
-        );
+setStorageValue(
+    "geminiScore",
+    scores.gemini ?? ""
+);
 
-        setStorageValue(
-            "chatgptScore",
-            scores.chatgpt || ""
-        );
+setStorageValue(
+    "chatgptScore",
+    scores.chatgpt ?? ""
+);
 
-        setStorageValue(
-            "copilotScore",
-            scores.copilot || ""
-        );
+setStorageValue(
+    "copilotScore",
+    scores.copilot ?? ""
+);
 
         setStorageText(
             "averageScore",
