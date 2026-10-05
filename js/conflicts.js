@@ -1,45 +1,194 @@
 "use strict";
 
+/*
+ * Consensus AI Lab
+ * Modelių balų konfliktų analizės modulis.
+ *
+ * Šis failas:
+ * 1. Perskaito Claude, Gemini, ChatGPT ir Copilot balus.
+ * 2. Patikrina, ar pateikti visi keturi balai.
+ * 3. Patikrina, ar balai yra nuo 0 iki 10.
+ * 4. Aptinka modelių poras, kurių balų skirtumas
+ *    viršija leidžiamą ribą.
+ * 5. Išsaugo konfliktus appState.projectData.
+ *
+ * Semantiniai konfliktai, tokie kaip faktiniai,
+ * objektyvūs ar subjektyvūs nesutarimai, bus
+ * nustatomi iš modelių JSON atsakymų ir Copilot
+ * arbitražo rezultatų.
+ */
+
+const CONFLICT_MODEL_DEFINITIONS = Object.freeze([
+    {
+        id: "claudeScore",
+        key: "claude",
+        name: "Claude"
+    },
+    {
+        id: "geminiScore",
+        key: "gemini",
+        name: "Gemini"
+    },
+    {
+        id: "chatgptScore",
+        key: "chatgpt",
+        name: "ChatGPT"
+    },
+    {
+        id: "copilotScore",
+        key: "copilot",
+        name: "Copilot"
+    }
+]);
+
+
+/*
+ * Perskaito visų keturių modelių balų laukus.
+ *
+ * Neteisingos arba tuščios reikšmės nepašalinamos,
+ * nes jos reikalingos validavimo pranešimams.
+ */
 function getModelScores() {
-    const modelDefinitions = [
-        {
-            id: "claudeScore",
-            name: "Claude"
-        },
-        {
-            id: "geminiScore",
-            name: "Gemini"
-        },
-        {
-            id: "chatgptScore",
-            name: "ChatGPT"
-        },
-        {
-            id: "copilotScore",
-            name: "Copilot"
-        }
-    ];
+    return CONFLICT_MODEL_DEFINITIONS.map(model => {
+        const input =
+            document.getElementById(model.id);
 
-    return modelDefinitions
-        .map(model => {
-            const input =
-                document.getElementById(model.id);
+        const rawValue =
+            input ? input.value.trim() : "";
 
-            const score =
-                input
-                    ? Number.parseFloat(input.value)
-                    : Number.NaN;
+        const score =
+            rawValue === ""
+                ? Number.NaN
+                : Number.parseFloat(rawValue);
 
-            return {
-                model: model.name,
-                score
-            };
-        })
-        .filter(item =>
-            Number.isFinite(item.score)
-        );
+        return {
+            model: model.name,
+            key: model.key,
+            elementId: model.id,
+            rawValue,
+            score,
+            valid:
+                Number.isFinite(score) &&
+                score >= 0 &&
+                score <= 10
+        };
+    });
 }
 
+
+/*
+ * Patikrina visų modelių balus.
+ */
+function validateConflictScores(scores) {
+    const missingModels = [];
+    const invalidModels = [];
+
+    scores.forEach(item => {
+        if (item.rawValue === "") {
+            missingModels.push(item.model);
+            return;
+        }
+
+        if (!item.valid) {
+            invalidModels.push(item.model);
+        }
+    });
+
+    if (missingModels.length > 0) {
+        return {
+            valid: false,
+            type: "MISSING_SCORES",
+            message:
+                "Konfliktų analizei trūksta šių modelių balų:\n- " +
+                missingModels.join("\n- ")
+        };
+    }
+
+    if (invalidModels.length > 0) {
+        return {
+            valid: false,
+            type: "INVALID_SCORES",
+            message:
+                "Šių modelių balai turi būti skaičiai nuo 0 iki 10:\n- " +
+                invalidModels.join("\n- ")
+        };
+    }
+
+    return {
+        valid: true,
+        type: null,
+        message: ""
+    };
+}
+
+
+/*
+ * Grąžina patvirtintą didžiausią leidžiamą
+ * balų skirtumą.
+ */
+function getMaximumAllowedScoreGap() {
+    const configuredGap =
+        Number(
+            appState?.settings?.maximumScoreGap
+        );
+
+    if (
+        Number.isFinite(configuredGap) &&
+        configuredGap >= 0
+    ) {
+        return configuredGap;
+    }
+
+    /*
+     * Atsarginė reikšmė pagal patvirtintą
+     * projekto reikalavimą.
+     */
+    return 0.2;
+}
+
+
+/*
+ * Nustato konflikto rizikos lygį.
+ */
+function calculateConflictSeverity(difference) {
+    if (difference >= 1) {
+        return "critical";
+    }
+
+    if (difference >= 0.75) {
+        return "high";
+    }
+
+    if (difference >= 0.4) {
+        return "medium";
+    }
+
+    return "low";
+}
+
+
+/*
+ * Sugeneruoja stabilų konflikto identifikatorių.
+ */
+function createConflictId(
+    firstModel,
+    secondModel,
+    firstIndex,
+    secondIndex
+) {
+    return [
+        "score-gap",
+        firstModel.toLowerCase(),
+        secondModel.toLowerCase(),
+        firstIndex,
+        secondIndex
+    ].join("-");
+}
+
+
+/*
+ * Aptinka balų skirtumų konfliktus.
+ */
 function detectConflicts() {
     const scores = getModelScores();
 
@@ -48,25 +197,24 @@ function detectConflicts() {
             "conflictOutput"
         );
 
-    if (scores.length < 2) {
-        const message =
-            "Konfliktų analizei reikia bent dviejų modelių balų.";
+    const validation =
+        validateConflictScores(scores);
 
+    if (!validation.valid) {
         if (output) {
-            output.value = message;
+            output.value = validation.message;
         }
 
         appState.projectData.conflicts = [];
+
+        appState.projectData.updatedAt =
+            new Date().toISOString();
 
         return [];
     }
 
     const threshold =
-        Number.isFinite(
-            appState.settings.conflictThreshold
-        )
-            ? appState.settings.conflictThreshold
-            : 0.5;
+        getMaximumAllowedScoreGap();
 
     const conflicts = [];
 
@@ -88,22 +236,32 @@ function detectConflicts() {
                     first.score - second.score
                 );
 
-            if (difference >= threshold) {
+            /*
+             * Skirtumas lygus leidžiamai ribai
+             * nėra konfliktas.
+             *
+             * Pavyzdžiui:
+             * 9.6 ir 9.8, kai riba 0.2,
+             * atitinka griežtą konsensuso taisyklę.
+             */
+            if (difference > threshold) {
                 conflicts.push({
-                    id:
-                        "conflict-" +
-                        Date.now() +
-                        "-" +
-                        firstIndex +
-                        "-" +
-                        secondIndex,
+                    id: createConflictId(
+                        first.model,
+                        second.model,
+                        firstIndex,
+                        secondIndex
+                    ),
 
-                    type: "score-gap",
+                    type: "SCORE_GAP_CONFLICT",
+                    category: "MODEL_SCORE_DIFFERENCE",
 
                     firstModel: first.model,
+                    firstModelKey: first.key,
                     firstScore: first.score,
 
                     secondModel: second.model,
+                    secondModelKey: second.key,
                     secondScore: second.score,
 
                     difference:
@@ -114,14 +272,13 @@ function detectConflicts() {
                     threshold,
 
                     severity:
-                        difference >= 1
-                            ? "critical"
-                            : difference >= 0.75
-                                ? "high"
-                                : "medium",
+                        calculateConflictSeverity(
+                            difference
+                        ),
 
+                    objective: false,
+                    requiresArbitration: true,
                     resolved: false,
-
                     resolution: ""
                 });
             }
@@ -134,13 +291,26 @@ function detectConflicts() {
     appState.projectData.updatedAt =
         new Date().toISOString();
 
+    /*
+     * Jei vedlio būsena prieinama,
+     * perduodame preliminarius balų konfliktus.
+     */
+    if (
+        typeof window.setPipelineConflicts ===
+        "function"
+    ) {
+        window.setPipelineConflicts({
+            scoreGaps: conflicts
+        });
+    }
+
     if (!output) {
         return conflicts;
     }
 
     if (conflicts.length === 0) {
         output.value =
-            "Reikšmingų konfliktų neaptikta.\n" +
+            "Reikšmingų balų konfliktų neaptikta.\n" +
             "Didžiausias leidžiamas skirtumas: " +
             threshold.toFixed(2);
 
@@ -148,8 +318,11 @@ function detectConflicts() {
     }
 
     const lines = [
-        "Aptikta konfliktų: " +
+        "Aptikta balų konfliktų: " +
             conflicts.length,
+        "",
+        "Leidžiamas didžiausias skirtumas: " +
+            threshold.toFixed(2),
         ""
     ];
 
@@ -173,18 +346,41 @@ function detectConflicts() {
             );
 
             lines.push(
+                "Konflikto tipas: " +
+                conflict.type
+            );
+
+            lines.push(
                 "Rizikos lygis: " +
                 conflict.severity
+            );
+
+            lines.push(
+                "Rekomendacija: perduoti Copilot arbitražui."
             );
 
             lines.push("");
         }
     );
 
-    output.value = lines.join("\n");
+    output.value =
+        lines.join("\n").trim();
 
     return conflicts;
 }
 
-window.getModelScores = getModelScores;
-window.detectConflicts = detectConflicts;
+
+window.CONFLICT_MODEL_DEFINITIONS =
+    CONFLICT_MODEL_DEFINITIONS;
+
+window.getModelScores =
+    getModelScores;
+
+window.validateConflictScores =
+    validateConflictScores;
+
+window.getMaximumAllowedScoreGap =
+    getMaximumAllowedScoreGap;
+
+window.detectConflicts =
+    detectConflicts;
