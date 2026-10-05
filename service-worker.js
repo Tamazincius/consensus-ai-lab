@@ -1,34 +1,30 @@
 "use strict";
 
-/*
- * Pakeiskite versijos numerį kiekvieną kartą,
- * kai atnaujinate programos failus.
- */
-const APP_VERSION = "0.4.0";
+const APP_VERSION = "0.4.1";
+
+const CACHE_PREFIX =
+    "consensus-ai-lab-";
 
 const CACHE_NAME =
-    "consensus-ai-lab-" + APP_VERSION;
+    CACHE_PREFIX + APP_VERSION;
 
-/*
- * Minimalūs failai, be kurių programa negali veikti.
- * Jei kurio nors iš jų nėra, Service Worker diegimas
- * bus laikomas nesėkmingu.
- */
 const REQUIRED_FILES = [
     "./",
     "./index.html",
     "./manifest.json",
-    "./css/main.css"
-];
+    "./css/main.css",
 
-/*
- * Papildomi programos failai.
- * Kiekvienas failas kešuojamas atskirai, todėl vieno
- * trūkstamo failo klaida nesustabdys viso diegimo.
- */
-const OPTIONAL_FILES = [
     "./js/state.js",
 
+    "./js/workflow/pipeline-state.js",
+    "./js/workflow/loop-controller.js",
+    "./js/workflow/orchestrator.js",
+    "./js/workflow/workflow.js",
+
+    "./js/app.js"
+];
+
+const OPTIONAL_FILES = [
     "./js/consensus.js",
     "./js/storage.js",
     "./js/conflicts.js",
@@ -44,13 +40,6 @@ const OPTIONAL_FILES = [
     "./js/projects.js",
     "./js/json-import.js",
 
-    "./js/workflow/pipeline-state.js",
-    "./js/workflow/loop-controller.js",
-    "./js/workflow/orchestrator.js",
-    "./js/workflow/workflow.js",
-
-    "./js/app.js",
-
     "./assets/icon-192.png",
     "./assets/icon-512.png",
     "./assets/apple-touch-icon.png",
@@ -59,188 +48,274 @@ const OPTIONAL_FILES = [
     "./assets/logo.png"
 ];
 
-/*
- * Diegimas.
- *
- * Pirmiausia įrašomi privalomi failai.
- * Po to bandoma atskirai įrašyti papildomus failus.
- */
-self.addEventListener("install", event => {
+self.addEventListener(
+    "install",
+    event => {
 
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(async cache => {
+        event.waitUntil(
+            installApplicationCache()
+        );
 
-                await cache.addAll(REQUIRED_FILES);
+    }
+);
 
-                const optionalResults =
-                    await Promise.allSettled(
-                        OPTIONAL_FILES.map(file => {
+async function installApplicationCache() {
 
-                            return cache.add(file);
+    const cache =
+        await caches.open(CACHE_NAME);
 
-                        })
+    await cache.addAll(
+        REQUIRED_FILES
+    );
+
+    const results =
+        await Promise.allSettled(
+            OPTIONAL_FILES.map(
+                file => cache.add(file)
+            )
+        );
+
+    results.forEach(
+        (result, index) => {
+
+            if (
+                result.status ===
+                "rejected"
+            ) {
+                console.warn(
+                    "Papildomas failas neįrašytas į cache:",
+                    OPTIONAL_FILES[index],
+                    result.reason
+                );
+            }
+
+        }
+    );
+
+    console.log(
+        "Įdiegtas programos cache:",
+        CACHE_NAME
+    );
+
+}
+
+self.addEventListener(
+    "activate",
+    event => {
+
+        event.waitUntil(
+            activateApplicationCache()
+        );
+
+    }
+);
+
+async function activateApplicationCache() {
+
+    const cacheNames =
+        await caches.keys();
+
+    await Promise.all(
+        cacheNames.map(
+            cacheName => {
+
+                const isOldApplicationCache =
+                    cacheName.startsWith(
+                        CACHE_PREFIX
+                    ) &&
+                    cacheName !==
+                        CACHE_NAME;
+
+                if (
+                    isOldApplicationCache
+                ) {
+                    return caches.delete(
+                        cacheName
                     );
+                }
 
-                optionalResults.forEach(
-                    (result, index) => {
-
-                        if (
-                            result.status ===
-                            "rejected"
-                        ) {
-                            console.warn(
-                                "Nepavyko įrašyti į cache:",
-                                OPTIONAL_FILES[index],
-                                result.reason
-                            );
-                        }
-
-                    }
+                return Promise.resolve(
+                    false
                 );
 
-                /*
-                 * Naujas Service Worker pereina
-                 * į waiting būseną. Jis nebus priverstinai
-                 * aktyvuojamas, jei veikia sena programos
-                 * versija.
-                 */
-                console.log(
-                    "Service Worker įdiegtas:",
-                    CACHE_NAME
-                );
-
-            })
-            .catch(error => {
-
-                console.error(
-                    "Service Worker diegimo klaida:",
-                    error
-                );
-
-                throw error;
-
-            })
+            }
+        )
     );
 
-});
+    await self.clients.claim();
 
-/*
- * Aktyvavimas.
- *
- * Ištrinamos visos ankstesnių programos versijų
- * talpyklos.
- */
-self.addEventListener("activate", event => {
-
-    event.waitUntil(
-        caches.keys()
-            .then(cacheNames => {
-
-                return Promise.all(
-                    cacheNames.map(cacheName => {
-
-                        const isOldConsensusCache =
-                            cacheName.startsWith(
-                                "consensus-ai-lab-"
-                            ) &&
-                            cacheName !== CACHE_NAME;
-
-                        if (isOldConsensusCache) {
-                            console.log(
-                                "Šalinamas senas cache:",
-                                cacheName
-                            );
-
-                            return caches.delete(
-                                cacheName
-                            );
-                        }
-
-                        return Promise.resolve(
-                            false
-                        );
-
-                    })
-                );
-
-            })
-            .then(() => {
-
-                /*
-                 * Leidžiama Service Worker valdyti
-                 * jau atidarytus programos langus.
-                 */
-                return self.clients.claim();
-
-            })
+    console.log(
+        "Aktyvus programos cache:",
+        CACHE_NAME
     );
 
-});
+}
 
-/*
- * Patikrina, ar užklausa yra navigacijos užklausa.
- */
-function isNavigationRequest(request) {
+self.addEventListener(
+    "fetch",
+    event => {
+
+        const request =
+            event.request;
+
+        if (
+            request.method !== "GET"
+        ) {
+            return;
+        }
+
+        const url =
+            new URL(request.url);
+
+        if (
+            isApiRequest(url)
+        ) {
+            event.respondWith(
+                fetch(request)
+            );
+
+            return;
+        }
+
+        if (
+            isNavigationRequest(request)
+        ) {
+            event.respondWith(
+                networkFirst(
+                    request,
+                    "./index.html"
+                )
+            );
+
+            return;
+        }
+
+        if (
+            isManifestRequest(url)
+        ) {
+            event.respondWith(
+                networkFirst(request)
+            );
+
+            return;
+        }
+
+        if (
+            isLocalJavaScriptOrCss(url)
+        ) {
+            event.respondWith(
+                staleWhileRevalidate(
+                    request
+                )
+            );
+
+            return;
+        }
+
+        if (
+            isImageOrFontRequest(
+                request
+            )
+        ) {
+            event.respondWith(
+                cacheFirst(request)
+            );
+
+            return;
+        }
+
+        event.respondWith(
+            networkFirst(request)
+        );
+
+    }
+);
+
+function isNavigationRequest(
+    request
+) {
+
+    const acceptedContent =
+        request.headers.get(
+            "accept"
+        ) || "";
 
     return (
-        request.mode === "navigate" ||
-        (
-            request.method === "GET" &&
-            request.headers
-                .get("accept")
-                ?.includes("text/html")
+        request.mode ===
+            "navigate" ||
+        acceptedContent.includes(
+            "text/html"
         )
     );
 
 }
 
-/*
- * Patikrina, ar failas yra manifestas.
- */
 function isManifestRequest(url) {
 
-    return (
-        url.pathname.endsWith(
-            "/manifest.json"
-        )
+    return url.pathname.endsWith(
+        "/manifest.json"
     );
 
 }
 
-/*
- * Patikrina, ar užklausa skirta programos API.
- *
- * Ateityje čia galima pridėti Cloudflare Worker
- * URL dalį. API atsakymai neturi būti saugomi
- * bendroje programos talpykloje.
- */
 function isApiRequest(url) {
 
     return (
-        url.pathname.includes("/api/") ||
-        url.hostname.includes(
+        url.pathname.includes(
+            "/api/"
+        ) ||
+        url.hostname ===
             "openrouter.ai"
+    );
+
+}
+
+function isLocalJavaScriptOrCss(
+    url
+) {
+
+    return (
+        url.origin ===
+            self.location.origin &&
+        (
+            url.pathname.endsWith(
+                ".js"
+            ) ||
+            url.pathname.endsWith(
+                ".css"
+            )
         )
     );
 
 }
 
-/*
- * Network-first strategija.
- *
- * Pirmiausia bandoma gauti naujausią failą iš tinklo.
- * Jei tinklas nepasiekiamas, naudojama cache versija.
- */
-async function networkFirst(request) {
+function isImageOrFontRequest(
+    request
+) {
+
+    return (
+        request.destination ===
+            "image" ||
+        request.destination ===
+            "font"
+    );
+
+}
+
+async function networkFirst(
+    request,
+    fallbackPath = null
+) {
 
     try {
+
         const networkResponse =
             await fetch(request);
 
         if (
-            networkResponse &&
-            networkResponse.ok
+            isCacheableResponse(
+                networkResponse
+            )
         ) {
             const cache =
                 await caches.open(
@@ -258,23 +333,25 @@ async function networkFirst(request) {
     } catch (error) {
 
         const cachedResponse =
-            await caches.match(request);
+            await caches.match(
+                request
+            );
 
         if (cachedResponse) {
             return cachedResponse;
         }
 
-        if (
-            isNavigationRequest(request)
-        ) {
-            const cachedIndex =
+        if (fallbackPath) {
+
+            const fallbackResponse =
                 await caches.match(
-                    "./index.html"
+                    fallbackPath
                 );
 
-            if (cachedIndex) {
-                return cachedIndex;
+            if (fallbackResponse) {
+                return fallbackResponse;
             }
+
         }
 
         throw error;
@@ -283,17 +360,14 @@ async function networkFirst(request) {
 
 }
 
-/*
- * Cache-first strategija.
- *
- * Pirmiausia naudojama vietinė failo kopija.
- * Jei jos nėra, failas gaunamas iš tinklo ir
- * įrašomas į cache.
- */
-async function cacheFirst(request) {
+async function cacheFirst(
+    request
+) {
 
     const cachedResponse =
-        await caches.match(request);
+        await caches.match(
+            request
+        );
 
     if (cachedResponse) {
         return cachedResponse;
@@ -303,8 +377,9 @@ async function cacheFirst(request) {
         await fetch(request);
 
     if (
-        networkResponse &&
-        networkResponse.ok
+        isCacheableResponse(
+            networkResponse
+        )
     ) {
         const cache =
             await caches.open(
@@ -321,201 +396,112 @@ async function cacheFirst(request) {
 
 }
 
-/*
- * Stale-while-revalidate strategija.
- *
- * Iš karto grąžinama cache versija, o fone
- * bandoma parsisiųsti naujesnę failo versiją.
- */
 async function staleWhileRevalidate(
     request
 ) {
 
     const cache =
-        await caches.open(CACHE_NAME);
+        await caches.open(
+            CACHE_NAME
+        );
 
     const cachedResponse =
-        await cache.match(request);
+        await cache.match(
+            request
+        );
 
-    const networkPromise =
+    const networkRequest =
         fetch(request)
-            .then(networkResponse => {
+            .then(
+                async networkResponse => {
 
-                if (
-                    networkResponse &&
-                    networkResponse.ok
-                ) {
-                    cache.put(
-                        request,
-                        networkResponse.clone()
-                    );
+                    if (
+                        isCacheableResponse(
+                            networkResponse
+                        )
+                    ) {
+                        await cache.put(
+                            request,
+                            networkResponse.clone()
+                        );
+                    }
+
+                    return networkResponse;
+
                 }
+            )
+            .catch(
+                error => {
 
-                return networkResponse;
+                    console.warn(
+                        "Nepavyko atnaujinti failo:",
+                        request.url,
+                        error
+                    );
 
-            })
-            .catch(error => {
+                    return null;
 
-                console.warn(
-                    "Foninio atnaujinimo klaida:",
-                    request.url,
-                    error
-                );
-
-                return null;
-
-            });
+                }
+            );
 
     if (cachedResponse) {
         return cachedResponse;
     }
 
     const networkResponse =
-        await networkPromise;
+        await networkRequest;
 
     if (networkResponse) {
         return networkResponse;
     }
 
     throw new Error(
-        "Failas nepasiekiamas: " +
+        "Išteklius nepasiekiamas: " +
         request.url
     );
 
 }
 
-/*
- * Užklausų apdorojimas.
- */
-self.addEventListener("fetch", event => {
+function isCacheableResponse(
+    response
+) {
 
-    const request = event.request;
-
-    /*
-     * Kešuojamos tik GET užklausos.
-     */
-    if (request.method !== "GET") {
-        return;
-    }
-
-    const url =
-        new URL(request.url);
-
-    /*
-     * DI ir kitos API užklausos visada siunčiamos
-     * tiesiai į tinklą ir nėra kešuojamos.
-     */
-    if (isApiRequest(url)) {
-
-        event.respondWith(
-            fetch(request)
-        );
-
-        return;
-
-    }
-
-    /*
-     * Navigacijai ir HTML naudojama network-first
-     * strategija, kad vartotojas gautų naujausią
-     * programos versiją.
-     */
-    if (isNavigationRequest(request)) {
-
-        event.respondWith(
-            networkFirst(request)
-        );
-
-        return;
-
-    }
-
-    /*
-     * Manifestas taip pat tikrinamas tinkle
-     * pirmiausia, nes naršyklės jį stipriai kešuoja.
-     */
-    if (isManifestRequest(url)) {
-
-        event.respondWith(
-            networkFirst(request)
-        );
-
-        return;
-
-    }
-
-    /*
-     * Tos pačios kilmės JavaScript ir CSS failams
-     * naudojama stale-while-revalidate strategija.
-     */
-    if (
-        url.origin ===
-            self.location.origin &&
-        (
-            url.pathname.endsWith(".js") ||
-            url.pathname.endsWith(".css")
-        )
-    ) {
-
-        event.respondWith(
-            staleWhileRevalidate(request)
-        );
-
-        return;
-
-    }
-
-    /*
-     * Ikonoms, paveikslėliams ir šriftams naudojama
-     * cache-first strategija.
-     */
-    if (
-        request.destination === "image" ||
-        request.destination === "font"
-    ) {
-
-        event.respondWith(
-            cacheFirst(request)
-        );
-
-        return;
-
-    }
-
-    /*
-     * Išorinėms CDN bibliotekoms ir kitiems
-     * ištekliams pirmiausia naudojamas tinklas.
-     */
-    event.respondWith(
-        networkFirst(request)
+    return Boolean(
+        response &&
+        response.ok &&
+        response.type !==
+            "error"
     );
 
-});
+}
 
-/*
- * Leidžia programai pranešti Service Worker,
- * kad nauja versija gali būti aktyvuota.
- */
-self.addEventListener("message", event => {
+self.addEventListener(
+    "message",
+    event => {
 
-    if (
-        event.data &&
-        event.data.type ===
-            "SKIP_WAITING"
-    ) {
-        self.skipWaiting();
+        if (
+            event.data &&
+            event.data.type ===
+                "SKIP_WAITING"
+        ) {
+            self.skipWaiting();
+            return;
+        }
+
+        if (
+            event.data &&
+            event.data.type ===
+                "GET_VERSION"
+        ) {
+            event.source?.postMessage({
+                type:
+                    "APP_VERSION",
+                version:
+                    APP_VERSION,
+                cacheName:
+                    CACHE_NAME
+            });
+        }
+
     }
-
-    if (
-        event.data &&
-        event.data.type ===
-            "GET_VERSION"
-    ) {
-        event.source?.postMessage({
-            type: "APP_VERSION",
-            version: APP_VERSION,
-            cacheName: CACHE_NAME
-        });
-    }
-
-});
+);
