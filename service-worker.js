@@ -16,6 +16,7 @@ const REQUIRED_FILES = [
 
     "./js/state.js",
     "./js/storage/database.js",
+    "./js/storage/projects-store.js",
 
     "./js/workflow/pipeline-state.js",
     "./js/workflow/loop-controller.js",
