@@ -63,7 +63,12 @@
 
     <button
     type="button"
-    onclick="verifyConsensusDatabase()">
+    onclick="verifyConsensusDatabase()
+
+            .then(result => alert(JSON.stringify(result, null, 2)))
+            .catch(error => alert(error.message));
+        
+    ">
     Tikrinti duomenų bazę
     </button>
 
