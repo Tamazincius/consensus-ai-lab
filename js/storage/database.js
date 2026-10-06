@@ -425,6 +425,159 @@ function createDatabaseId(prefix) {
     );
 }
 
+function requestToPromise(request) {
+    return new Promise(
+        (resolve, reject) => {
+
+            request.onsuccess =
+                function () {
+                    resolve(
+                        request.result
+                    );
+                };
+
+            request.onerror =
+                function () {
+                    reject(
+                        request.error ||
+                        new Error(
+                            "IndexedDB užklausa nepavyko."
+                        )
+                    );
+                };
+        }
+    );
+}
+
+async function addDatabaseRecord(
+    storeName,
+    record
+) {
+    const database =
+        await openConsensusDatabase();
+
+    const transaction =
+        database.transaction(
+            storeName,
+            "readwrite"
+        );
+
+    const store =
+        transaction.objectStore(
+            storeName
+        );
+
+    const request =
+        store.add(record);
+
+    return requestToPromise(
+        request
+    );
+}
+
+async function putDatabaseRecord(
+    storeName,
+    record
+) {
+    const database =
+        await openConsensusDatabase();
+
+    const transaction =
+        database.transaction(
+            storeName,
+            "readwrite"
+        );
+
+    const store =
+        transaction.objectStore(
+            storeName
+        );
+
+    const request =
+        store.put(record);
+
+    return requestToPromise(
+        request
+    );
+}
+
+async function getDatabaseRecord(
+    storeName,
+    key
+) {
+    const database =
+        await openConsensusDatabase();
+
+    const transaction =
+        database.transaction(
+            storeName,
+            "readonly"
+        );
+
+    const store =
+        transaction.objectStore(
+            storeName
+        );
+
+    const request =
+        store.get(key);
+
+    return requestToPromise(
+        request
+    );
+}
+
+async function getAllDatabaseRecords(
+    storeName
+) {
+    const database =
+        await openConsensusDatabase();
+
+    const transaction =
+        database.transaction(
+            storeName,
+            "readonly"
+        );
+
+    const store =
+        transaction.objectStore(
+            storeName
+        );
+
+    const request =
+        store.getAll();
+
+    return requestToPromise(
+        request
+    );
+}
+
+async function deleteDatabaseRecord(
+    storeName,
+    key
+) {
+    const database =
+        await openConsensusDatabase();
+
+    const transaction =
+        database.transaction(
+            storeName,
+            "readwrite"
+        );
+
+    const store =
+        transaction.objectStore(
+            storeName
+        );
+
+    const request =
+        store.delete(key);
+
+    return requestToPromise(
+        request
+    );
+}
+
 async function verifyConsensusDatabase() {
     const database =
         await openConsensusDatabase();
@@ -484,3 +637,21 @@ window.createDatabaseId =
 
 window.verifyConsensusDatabase =
     verifyConsensusDatabase;
+
+window.requestToPromise =
+    requestToPromise;
+
+window.addDatabaseRecord =
+    addDatabaseRecord;
+
+window.putDatabaseRecord =
+    putDatabaseRecord;
+
+window.getDatabaseRecord =
+    getDatabaseRecord;
+
+window.getAllDatabaseRecords =
+    getAllDatabaseRecords;
+
+window.deleteDatabaseRecord =
+    deleteDatabaseRecord;
