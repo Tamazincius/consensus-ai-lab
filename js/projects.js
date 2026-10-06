@@ -1,35 +1,71 @@
-function createProject(){
+"use strict";
+
+async function createProject() {
 
     const title =
         prompt(
             "Projekto pavadinimas"
         );
 
-    if(!title) return;
+    if (
+        !title ||
+        !title.trim()
+    ) {
+        return;
+    }
 
-    const projects =
-        JSON.parse(
-            localStorage.getItem(
-                "projects"
-            ) || "[]"
-        );
+    await createProjectRecord({
+        title:
+            title.trim(),
 
-    projects.push({
-
-        title
-
+        task: "",
+        text: "",
+        arbitration: "",
+        status: "draft"
     });
 
-    localStorage.setItem(
-
-        "projects",
-
-        JSON.stringify(
-            projects
-        )
-
-    );
-
-    loadProjects();
-
+    await loadProjects();
 }
+
+async function loadProjects() {
+
+    const projectList =
+        document.getElementById(
+            "projectList"
+        );
+
+    if (!projectList) {
+        return;
+    }
+
+    const projects =
+        await getAllProjectRecords();
+
+    projectList.innerHTML = "";
+
+    projects.forEach(
+        project => {
+
+            const option =
+                document.createElement(
+                    "option"
+                );
+
+            option.value =
+                project.id;
+
+            option.textContent =
+                project.title;
+
+            projectList.appendChild(
+                option
+            );
+        }
+    );
+}
+
+window.createProject =
+    createProject;
+
+window.loadProjects =
+    loadProjects;
