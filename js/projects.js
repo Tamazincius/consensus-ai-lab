@@ -234,17 +234,17 @@ async function saveCurrentProject() {
 
             task:
                 getFieldValue(
-                    "taskInput"
+                    "task"
                 ),
 
             text:
                 getFieldValue(
-                    "textInput"
+                    "text"
                 ),
 
             arbitration:
                 getFieldValue(
-                    "arbitrationInput"
+                    "arbitratorNotes"
                 )
         };
 
@@ -299,12 +299,12 @@ async function deleteSelectedProject() {
         return;
     }
 
-    const confirmDelete =
+    const confirmed =
         window.confirm(
             "Ar tikrai ištrinti projektą?"
         );
 
-    if (!confirmDelete) {
+    if (!confirmed) {
         return;
     }
 
@@ -341,17 +341,17 @@ function fillProjectForm(
 ) {
 
     setFieldValue(
-        "taskInput",
+        "task",
         project.task
     );
 
     setFieldValue(
-        "textInput",
+        "text",
         project.text
     );
 
     setFieldValue(
-        "arbitrationInput",
+        "arbitratorNotes",
         project.arbitration
     );
 }
@@ -359,17 +359,17 @@ function fillProjectForm(
 function clearProjectForm() {
 
     setFieldValue(
-        "taskInput",
+        "task",
         ""
     );
 
     setFieldValue(
-        "textInput",
+        "text",
         ""
     );
 
     setFieldValue(
-        "arbitrationInput",
+        "arbitratorNotes",
         ""
     );
 }
