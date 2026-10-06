@@ -1,6 +1,6 @@
 "use strict";
 
-const APP_VERSION = "0.5.9";
+const APP_VERSION = "0.5.10";
 
 const CACHE_PREFIX =
     "consensus-ai-lab-";
