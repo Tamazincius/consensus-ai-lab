@@ -1,6 +1,6 @@
 "use strict";
 
-const APP_VERSION = "0.5.8";
+const APP_VERSION = "0.5.9";
 
 const CACHE_PREFIX =
     "consensus-ai-lab-";
@@ -16,6 +16,7 @@ const REQUIRED_FILES = [
 
     "./js/state.js",
     "./js/storage/database.js",
+    "./js/storage/projects-store.js",
     "./js/storage/projects-store.js",
 
     "./js/workflow/pipeline-state.js",
