@@ -138,6 +138,52 @@ async function deleteProjectRecord(
     return true;
 }
 
+async function setCurrentProject(
+    projectId
+) {
+    const project =
+        await getProjectRecord(
+            projectId
+        );
+
+    if (!project) {
+        return null;
+    }
+
+    appState.currentProject =
+        project.id;
+
+    localStorage.setItem(
+        "consensus-current-project-id",
+        project.id
+    );
+
+    return project;
+}
+
+async function getCurrentProject() {
+
+    const projectId =
+        appState.currentProject ||
+        localStorage.getItem(
+            "consensus-current-project-id"
+        );
+
+    if (!projectId) {
+        return null;
+    }
+
+    return getProjectRecord(
+        projectId
+    );
+}
+
+window.setCurrentProject =
+    setCurrentProject;
+
+window.getCurrentProject =
+    getCurrentProject;
+
 window.normalizeProjectRecord =
     normalizeProjectRecord;
 
