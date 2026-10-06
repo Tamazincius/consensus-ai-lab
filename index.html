@@ -523,6 +523,30 @@ async function runProjectsStoreTest() {
             project.id
         );
 
+
+const allRecordsAfterDelete =
+    await getAllProjectRecords();
+
+output.value +=
+    "\n\nProjektų po trynimo: " +
+    allRecordsAfterDelete.length +
+    "\n";
+
+const afterDelete =
+    await getProjectRecord(
+        project.id
+    );
+
+output.value +=
+    "\nPo trynimo gautas įrašas:\n" +
+    JSON.stringify(
+        afterDelete,
+        null,
+        2
+    ) +
+    "\n\n";
+        
+<!--
         output.value +=
             "✅ Projektas ištrintas\n\n";
 
@@ -530,7 +554,8 @@ async function runProjectsStoreTest() {
             await getProjectRecord(
                 project.id
             );
-
+-->
+        
         output.value +=
             afterDelete === null
                 ? "✅ Ištrynimas patvirtintas"
