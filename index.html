@@ -75,6 +75,13 @@
 
     <button
     type="button"
+    onclick="runProjectsStoreTest()">
+    Testuoti Projects Store
+    </button>
+
+
+    <button
+    type="button"
     onclick="testDatabaseCrud()">
     Testuoti CRUD
     </button>
@@ -85,6 +92,15 @@
 <select id="projectList">
 </select>
 
+
+    <textarea
+    id="projectsStoreOutput"
+    rows="12"
+    readonly>
+    </textarea>
+
+
+    
 <hr>
 
     <h2>Dashboard</h2>
@@ -445,6 +461,90 @@ async function testDatabaseCrud() {
     );
 }
 </script>
+
+
+    <script>
+async function runProjectsStoreTest() {
+
+    const output =
+        document.getElementById(
+            "projectsStoreOutput"
+        );
+
+    output.value =
+        "Pradedamas testas...\n\n";
+
+    try {
+
+        const project =
+            await createProjectRecord({
+                title:
+                    "Test Project",
+
+                task:
+                    "Projects Store test",
+
+                text:
+                    "Lorem ipsum"
+            });
+
+        output.value +=
+            "✅ Sukurtas projektas\n";
+
+        output.value +=
+            "ID: " +
+            project.id +
+            "\n\n";
+
+        const loaded =
+            await getProjectRecord(
+                project.id
+            );
+
+        output.value +=
+            "✅ Perskaitytas projektas\n";
+
+        output.value +=
+            loaded.title +
+            "\n\n";
+
+        const allProjects =
+            await getAllProjectRecords();
+
+        output.value +=
+            "✅ Gauti visi projektai\n";
+
+        output.value +=
+            "Kiekis: " +
+            allProjects.length +
+            "\n\n";
+
+        await deleteProjectRecord(
+            project.id
+        );
+
+        output.value +=
+            "✅ Projektas ištrintas\n\n";
+
+        const afterDelete =
+            await getProjectRecord(
+                project.id
+            );
+
+        output.value +=
+            afterDelete === null
+                ? "✅ Ištrynimas patvirtintas"
+                : "❌ Projektas vis dar rastas";
+
+    } catch (error) {
+
+        output.value +=
+            "❌ Klaida:\n\n" +
+            error.message;
+    }
+}
+</script>
+
 
     
 
