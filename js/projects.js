@@ -69,3 +69,10 @@ window.createProject =
 
 window.loadProjects =
     loadProjects;
+
+window.addEventListener(
+    "DOMContentLoaded",
+    function () {
+        loadProjects();
+    }
+);
