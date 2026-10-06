@@ -72,6 +72,14 @@
     Tikrinti duomenų bazę
     </button>
 
+
+    <button
+    type="button"
+    onclick="testDatabaseCrud()">
+    Testuoti CRUD
+    </button>
+
+    
 <br><br>
 
 <select id="projectList">
@@ -395,6 +403,49 @@ DOCX
 <script src="./js/workflow/workflow.js"></script>
 
 <script src="./js/app.js"></script>
+
+
+<script>
+async function testDatabaseCrud() {
+
+    const id =
+        createDatabaseId(
+            "test"
+        );
+
+    const record = {
+        id,
+        title:
+            "CRUD testas"
+    };
+
+    await addDatabaseRecord(
+        CONSENSUS_DATABASE_STORES.PROJECTS,
+        record
+    );
+
+    const loaded =
+        await getDatabaseRecord(
+            CONSENSUS_DATABASE_STORES.PROJECTS,
+            id
+        );
+
+    alert(
+        JSON.stringify(
+            loaded,
+            null,
+            2
+        )
+    );
+
+    await deleteDatabaseRecord(
+        CONSENSUS_DATABASE_STORES.PROJECTS,
+        id
+    );
+}
+</script>
+
+    
 
 </body>
 
